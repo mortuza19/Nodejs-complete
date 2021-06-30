@@ -1,0 +1,70 @@
+const http = require('http');
+const fs = require('fs');
+const server = http.createServer((req, res) => {
+    const url = req.url;
+    const method = req.method;
+    switch (url) {
+        case '/':
+            res.write(homepageHtml());
+            res.end();
+            break;
+        case '/create-user':
+            if (method === 'POST') {
+                const body= [];
+                req.on('data', (chunk) => {
+                    body.push(chunk);
+                });
+                req.on('end', () => {
+                    const user = Buffer.concat(body).toString().split('=')[1];
+                    fs.writeFile('user.txt', user, (error) => {
+                        res.statusCode = 302;
+                        res.setHeader('Location', '/');
+                        res.end();
+                    })
+                })
+            } else {
+                res.write(homepageHtml());
+                res.end();
+            }
+            break;
+        case '/user': 
+            res.write(userHtml());
+            res.end();
+            break;
+        default:
+            res.write(homepageHtml());
+            res.end();
+            break;
+    }
+});
+
+server.listen(3000);
+
+const homepageHtml = () => {
+    return `
+    <html>
+        <head><title>Homepage</title></head>
+        <body>
+            <h2>Hello from node.js</h2>
+            <form action = "/create-user" method="POST">
+                <input type="text" name="user">
+                <button type="submit">Send</button>
+            </form>
+        </body>
+    </html>
+    `;
+}
+
+const userHtml = () => {
+    return `
+    <html>
+        <head><title>User</title></head>
+        <body>
+            <ul>
+                <li> User 1</li>
+                <li> user 2</li>
+            </ul>
+        </body>
+    </html>
+    `;
+}
